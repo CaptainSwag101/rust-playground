@@ -1,4 +1,4 @@
-use std::{io, collections, cmp::Ordering};
+use std::{io, io::Write, collections, cmp::Ordering};
 
 fn main() {
     println!("Job scheduler test.");
@@ -19,7 +19,14 @@ fn main() {
         match choice.trim().to_lowercase().as_str() {
             "a" => {
                 job_list.push(create_job());
+                println!("Job added.")
             },
+            "s" => _ = process_job_list(&mut job_list),
+            "r" => {
+                while !process_job_list(&mut job_list) { }
+                println!("Job processing completed.");
+            }
+            "q" => break,
             _ => println!("Invalid choice.")
         }
     }
@@ -47,6 +54,7 @@ fn get_integer_input() -> u32 {
 
 fn create_job() -> Job {
     print!("Enter the number of cycles the job needs to complete: ");
+    io::stdout().flush().expect("Unable to flush stdout!");
     let time = get_integer_input();
 
     let job = Job {
@@ -55,6 +63,19 @@ fn create_job() -> Job {
     };
 
     job
+}
+
+fn process_job_list(job_list: &mut Vec<Job>) -> bool {
+    let mut all_done = true;
+
+    // Check if all jobs are completed
+    for job in job_list {
+        if job.current_time != job.total_time {
+            all_done = false;
+        }
+    }
+
+    all_done
 }
 
 struct Job {
