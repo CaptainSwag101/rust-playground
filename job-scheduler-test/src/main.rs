@@ -1,4 +1,4 @@
-use std::{io, io::Write, collections, cmp::Ordering};
+use std::{io, io::Write, option, collections, cmp::Ordering};
 
 fn main() {
     println!("Job scheduler test.");
@@ -47,7 +47,10 @@ fn get_integer_input() -> u32 {
         let text = get_text_input();
         match text.trim().parse() {
             Ok(num) => return num,
-            Err(_) => print!("Invalid number. Try again: "),
+            Err(_) => {
+                print!("Invalid number. Try again: ");
+                io::stdout().flush().expect("Unable to flush stdout!");
+            },
         };
     }
 }
@@ -57,21 +60,35 @@ fn create_job() -> Job {
     io::stdout().flush().expect("Unable to flush stdout!");
     let time = get_integer_input();
 
+    print!("Enter the priority of the job: ");
+    io::stdout().flush().expect("Unable to flush stdout!");
+    let prio = get_integer_input();
+
     let job = Job {
         total_time: time,
         current_time: 0,
+        priority: prio,
+        sleep: false,
     };
 
     job
 }
 
 fn process_job_list(job_list: &mut Vec<Job>) -> bool {
-    let mut all_done = true;
+    // Sort job list by priority
+    job_list.sort_by(|a, b| b.priority.cmp(&a.priority));
 
-    // Check if all jobs are completed
+    // Process the first (highest-priority) job that is not asleep.
+    // On the way, if we fail to process any jobs, mark everything as done.
+    let mut all_done = true;
     for job in job_list {
-        if job.current_time != job.total_time {
+        if !job.sleep && job.current_time < job.total_time {
+            job.current_time += 1;
             all_done = false;
+            if job.current_time == job.total_time {
+                println!("Job with priority {} completed processing.", job.priority);
+            }
+            break;
         }
     }
 
@@ -81,4 +98,6 @@ fn process_job_list(job_list: &mut Vec<Job>) -> bool {
 struct Job {
     total_time: u32, 
     current_time: u32,
+    priority: u32,
+    sleep: bool,
 }
